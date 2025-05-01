@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carnet Journalier</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <style>
+    :root {
+      --primary-color: #4e73df;
+      --secondary-color: #1cc88a;
+      --bg-color: #f8f9fc;
+      --card-bg: #ffffff;
+      --text-color: #495057;
+      --border-color: #e0e0e0;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --highlight-color: #f39c12;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 30px;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.3s ease-in-out;
+    }
+
+    h1:hover {
+      color: var(--highlight-color);
+    }
+
+    .week-selector {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .week-selector label {
+      font-size: 1.2em;
+      color: var(--primary-color);
+    }
+
+    .week-selector input {
+      padding: 12px;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      font-size: 1.1em;
+      margin-top: 10px;
+      outline: none;
+      background-color: #fff;
+      box-shadow: 0 4px 12px var(--shadow-color);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .week-selector input:focus {
+      box-shadow: 0 0 15px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .week-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: slideIn 1s forwards 0.5s;
+    }
+
+    .day-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 20px var(--shadow-color);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .day-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .day-title {
+      font-weight: bold;
+      font-size: 1.5em;
+      color: var(--primary-color);
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .day-content {
+      min-height: 140px;
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px dashed var(--border-color);
+      background-color: #f9fbfd;
+      line-height: 1.6;
+      color: #333;
+      white-space: pre-wrap;
+      outline: none;
+      font-size: 1.1em;
+      transition: background-color 0.3s ease;
+    }
+
+    .day-content:focus {
+      border-color: var(--primary-color);
+      background-color: #ffffff;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .week-container {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .week-selector label {
+        font-size: 1.1em;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .day-title {
+        font-size: 1.3em;
+      }
+
+      .day-content {
+        font-size: 1em;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 onclick="window.location.href='https://snake-git-master-warrenbgs-projects.vercel.app/'">📘 Mon Carnet Journalier</h1>
+
+  <div class="week-selector">
+    <label for="week">📅 Sélectionner la semaine : </label>
+    <input type="week" id="week" min="2025-W01" />
+  </div>
+
+  <div class="week-container">
+    <div class="day-card">
+      <div class="day-title">Lundi</div>
+      <div class="day-content" contenteditable="true" data-day="lundi"></div>
+    </div>
+    <div class="day-card">
+      <div class="day-title">Mardi</div>
+      <div class="day-content" contenteditable="true" data-day="mardi"></div>
+    </div>
+    <div class="day-card">
+      <div class="day-title">Mercredi</div>
+      <div class="day-content" contenteditable="true" data-day="mercredi"></div>
+    </div>
+    <div class="day-card">
+      <div class="day-title">Jeudi</div>
+      <div class="day-content" contenteditable="true" data-day="jeudi"></div>
+    </div>
+    <div class="day-card">
+      <div class="day-title">Vendredi</div>
+      <div class="day-content" contenteditable="true" data-day="vendredi"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration de Firebase
+    const firebaseConfig = {
+      apiKey: "TON_API_KEY",
+      authDomain: "TON_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://TON_PROJECT_ID.firebaseio.com",
+      projectId: "TON_PROJECT_ID",
+      storageBucket: "TON_PROJECT_ID.appspot.com",
+      messagingSenderId: "TON_SENDER_ID",
+      appId: "TON_APP_ID",
+      measurementId: "TON_MEASUREMENT_ID"
+    };
+
+    // Initialisation de Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const weekInput = document.getElementById("week");
+    const contentBlocks = document.querySelectorAll(".day-content");
+    let currentWeekKey = "";
+
+    function getWeekKey(weekStr, day) {
+      return `carnet_${weekStr}_${day}`;
+    }
+
+    function loadWeek(weekStr) {
+      currentWeekKey = weekStr;
+      contentBlocks.forEach(block => {
+        const day = block.dataset.day;
+        const ref = database.ref(`${weekStr}/${day}`);
+        ref.on('value', (snapshot) => {
+          const data = snapshot.val();
+          block.innerHTML = data || "";
+        });
+      });
+    }
+
+    function saveDay(day, content) {
+      const ref = database.ref(`${currentWeekKey}/${day}`);
+      ref.set(content);
+    }
+
+    // Sauvegarde automatique et écoute des changements
+    contentBlocks.forEach(block => {
+      block.addEventListener("input", () => {
+        const day = block.dataset.day;
+        saveDay(day, block.innerHTML);
+      });
+    });
+
+    // Initialisation avec la semaine actuelle
+    const today = new Date();
+    const isoWeek = today.toISOString().slice(0, 10);
+    weekInput.value = isoWeek;
+
+    weekInput.addEventListener("change", () => {
+      loadWeek(weekInput.value);
+    });
+
+    loadWeek(weekInput.value);
+  </script>
+</body>
+</html>
