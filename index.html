@@ -76,7 +76,7 @@
     .week-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
+      grid-template-rows: repeat(3, auto);
       gap: 20px;
       max-width: 1200px;
       margin: 0 auto;
@@ -127,7 +127,6 @@
       background-color: #ffffff;
     }
 
-    /* Animations */
     @keyframes fadeIn {
       0% { opacity: 0; }
       100% { opacity: 1; }
@@ -138,7 +137,6 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
-    /* Responsive Adjustments */
     @media (max-width: 768px) {
       .week-container {
         grid-template-columns: 1fr;
@@ -172,7 +170,7 @@
   <h1 onclick="window.location.href='https://snake-git-master-warrenbgs-projects.vercel.app/'">📘 Mon Carnet Journalier</h1>
 
   <div class="week-selector">
-    <label for="week">📅 Sélectionner la semaine : </label>
+    <label for="week">📅 Sélectionner la semaine :</label><br />
     <input type="week" id="week" min="2025-W01" />
   </div>
 
@@ -200,7 +198,6 @@
   </div>
 
   <script>
-    // Configuration de Firebase
     const firebaseConfig = {
       apiKey: "TON_API_KEY",
       authDomain: "TON_PROJECT_ID.firebaseapp.com",
@@ -212,27 +209,46 @@
       measurementId: "TON_MEASUREMENT_ID"
     };
 
-    // Initialisation de Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
     const weekInput = document.getElementById("week");
     const contentBlocks = document.querySelectorAll(".day-content");
     let currentWeekKey = "";
+    let activeRefs = [];
 
-    function getWeekKey(weekStr, day) {
-      return `carnet_${weekStr}_${day}`;
+    function getCurrentISOWeek() {
+      const date = new Date();
+      const tmp = new Date(date.getTime());
+      tmp.setHours(0, 0, 0, 0);
+      tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
+      const week1 = new Date(tmp.getFullYear(), 0, 4);
+      const weekNumber = 1 + Math.round(((tmp - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+      return `${tmp.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+    }
+
+    function clearPreviousListeners() {
+      activeRefs.forEach(({ ref, callback }) => {
+        ref.off('value', callback);
+      });
+      activeRefs = [];
     }
 
     function loadWeek(weekStr) {
+      clearPreviousListeners();
       currentWeekKey = weekStr;
+
       contentBlocks.forEach(block => {
         const day = block.dataset.day;
         const ref = database.ref(`${weekStr}/${day}`);
-        ref.on('value', (snapshot) => {
+
+        const callback = (snapshot) => {
           const data = snapshot.val();
-          block.innerHTML = data || "";
-        });
+          block.textContent = data || "";
+        };
+
+        ref.on('value', callback);
+        activeRefs.push({ ref, callback });
       });
     }
 
@@ -241,24 +257,20 @@
       ref.set(content);
     }
 
-    // Sauvegarde automatique et écoute des changements
     contentBlocks.forEach(block => {
       block.addEventListener("input", () => {
         const day = block.dataset.day;
-        saveDay(day, block.innerHTML);
+        saveDay(day, block.textContent);
       });
     });
 
-    // Initialisation avec la semaine actuelle
-    const today = new Date();
-    const isoWeek = today.toISOString().slice(0, 10);
+    const isoWeek = getCurrentISOWeek();
     weekInput.value = isoWeek;
+    loadWeek(isoWeek);
 
     weekInput.addEventListener("change", () => {
       loadWeek(weekInput.value);
     });
-
-    loadWeek(weekInput.value);
   </script>
 </body>
 </html>
